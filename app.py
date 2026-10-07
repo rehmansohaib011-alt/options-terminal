@@ -8,9 +8,6 @@ import re
 import time
 import requests
 
-# ============================================================
-# PAGE CONFIG
-# ============================================================
 st.set_page_config(
     page_title="T.W.S GAMMA TERMINAL",
     page_icon="◉",
@@ -18,19 +15,11 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ============================================================
-# CSS — smooth, responsive, GPU-friendly
-# ============================================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-
 *, *::before, *::after { box-sizing: border-box; }
-html, body, .stApp {
-    font-family: 'Inter', sans-serif;
-    overflow-x: hidden !important;
-    max-width: 100vw;
-}
+html, body, .stApp { font-family: 'Inter', sans-serif; overflow-x: hidden !important; max-width: 100vw; }
 .stApp {
     background:
         radial-gradient(circle at 10% 0%, #17295c 0%, transparent 30%),
@@ -40,8 +29,6 @@ html, body, .stApp {
     -webkit-font-smoothing: antialiased;
 }
 img, svg, video, canvas { max-width: 100%; height: auto; }
-
-/* ---------- Command bar ---------- */
 .tws-command{
     position:relative; display:flex; align-items:center; justify-content:space-between;
     gap:12px; padding:12px 14px; margin-bottom:14px; border-radius:16px;
@@ -70,19 +57,11 @@ img, svg, video, canvas { max-width: 100%; height: auto; }
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .tws-current b{ color:#fff; }
-
 section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #070b17, #0b1020);
     border-right: 1px solid #202d50;
 }
-
-.block-container {
-    max-width: 1500px;
-    padding: 20px 22px 46px;
-    overflow-x: clip;
-}
-
-/* ---------- Hero ---------- */
+.block-container { max-width: 1500px; padding: 20px 22px 46px; overflow-x: clip; }
 .hero {
     position: relative; overflow: hidden;
     padding: 24px 26px; border-radius: 22px;
@@ -90,8 +69,7 @@ section[data-testid="stSidebar"] {
     border: 1px solid #2c3d70;
     box-shadow: 0 0 35px rgba(66,103,255,.15);
     margin-bottom: 20px;
-    will-change: transform;
-    transform: translateZ(0);
+    will-change: transform; transform: translateZ(0);
     transition: transform .5s cubic-bezier(.16,1,.3,1), box-shadow .5s ease, border-color .5s ease;
 }
 .hero::after{
@@ -123,8 +101,6 @@ section[data-testid="stSidebar"] {
     animation: liveGlow 2.4s ease-in-out infinite;
 }
 @keyframes liveGlow { 50% { box-shadow: 0 0 22px rgba(81,242,177,.18); } }
-
-/* ---------- Metric / Level cards ---------- */
 .metric-card, .level-card {
     position: relative; overflow: hidden; min-width: 0;
     padding: 16px; border-radius: 16px;
@@ -172,31 +148,16 @@ section[data-testid="stSidebar"] {
     font-size: clamp(18px, 3.4vw, 24px); font-weight:800; margin-top:6px;
     word-break:break-word; line-height:1.15;
 }
-.level-card.level-call{
-    border-color:rgba(61,220,151,.32);
-    background:linear-gradient(145deg,rgba(13,58,48,.52),rgba(9,14,28,.96));
-}
+.level-card.level-call{ border-color:rgba(61,220,151,.32); background:linear-gradient(145deg,rgba(13,58,48,.52),rgba(9,14,28,.96)); }
 .level-card.level-call .level-price{ color:#3ddc97; }
-.level-card.level-put{
-    border-color:rgba(255,93,115,.32);
-    background:linear-gradient(145deg,rgba(67,22,36,.48),rgba(9,14,28,.96));
-}
+.level-card.level-put{ border-color:rgba(255,93,115,.32); background:linear-gradient(145deg,rgba(67,22,36,.48),rgba(9,14,28,.96)); }
 .level-card.level-put .level-price{ color:#ff5d73; }
-.level-card.level-flip{
-    border-color:rgba(255,209,102,.34);
-    background:linear-gradient(145deg,rgba(74,58,20,.42),rgba(9,14,28,.96));
-}
+.level-card.level-flip{ border-color:rgba(255,209,102,.34); background:linear-gradient(145deg,rgba(74,58,20,.42),rgba(9,14,28,.96)); }
 .level-card.level-flip .level-price{ color:#ffd166; }
-.level-card.level-pain{
-    border-color:rgba(120,137,255,.34);
-    background:linear-gradient(145deg,rgba(31,35,78,.48),rgba(9,14,28,.96));
-}
+.level-card.level-pain{ border-color:rgba(120,137,255,.34); background:linear-gradient(145deg,rgba(31,35,78,.48),rgba(9,14,28,.96)); }
 .level-card.level-pain .level-price{ color:#9aa7ff; }
-
 .pos { color: #3ddc97; }
 .neg { color: #ff5d73; }
-
-/* ---------- Buttons ---------- */
 .stButton button{
     width: 100%; height: 44px; border: none; border-radius: 11px;
     background: linear-gradient(90deg, #4168ff, #7255ff);
@@ -210,14 +171,10 @@ section[data-testid="stSidebar"] {
     filter: brightness(1.08);
 }
 .stButton button:active{ transform: translate3d(0,0,0) scale(.985); }
-
-/* ---------- Dataframe ---------- */
 [data-testid="stDataFrame"]{
     border:1px solid #243354; border-radius:15px; overflow:hidden;
     box-shadow:0 15px 40px rgba(0,0,0,.2); max-width:100%;
 }
-
-/* ---------- Popover (search icon) ---------- */
 div[data-testid="stPopover"] > button{
     height: 42px !important; min-width: 42px !important;
     width: 42px !important; padding: 0 !important;
@@ -233,15 +190,9 @@ div[data-testid="stPopover"] > button:hover{
     border-color: #536fd0 !important;
     box-shadow: 0 10px 24px rgba(65,104,255,.22);
 }
-
-.footer {
-    text-align: center; color:#52617e; font-size:11px;
-    padding-top: 30px; line-height:1.6;
-}
+.footer { text-align: center; color:#52617e; font-size:11px; padding-top: 30px; line-height:1.6; }
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
-
-/* ---------- Responsive ---------- */
 @media (min-width: 1100px){
     .block-container { padding: 26px 34px 55px; }
     .hero { min-height: 155px; display:flex; flex-direction:column; justify-content:center; }
@@ -286,37 +237,32 @@ footer { visibility: hidden; }
 TICKERS = ["SPY", "QQQ", "IWM", "NVDA", "AMD", "AAPL", "TSLA", "MSFT", "META", "AMZN",
            "GOOGL", "NFLX", "AVGO", "INTC", "MU", "PLTR", "SMCI", "SMH", "SOXL", "COIN"]
 
-# ============================================================
-# SESSION STATE
-# ============================================================
 if "tws_ticker" not in st.session_state:
     st.session_state.tws_ticker = "SPY"
 
-def normalize_symbol(value: str) -> str:
+def normalize_symbol(value):
     value = value.strip().upper().replace(" ", "")
     crypto = {"BTC":"BTC-USD","BITCOIN":"BTC-USD","ETH":"ETH-USD","ETHEREUM":"ETH-USD",
               "SOL":"SOL-USD","SOLANA":"SOL-USD","DOGE":"DOGE-USD","DOGECOIN":"DOGE-USD",
               "XRP":"XRP-USD","BNB":"BNB-USD"}
     return crypto.get(value, value)
 
-# ============================================================
-# COMMAND BAR + SEARCH POPOVER
-# ============================================================
 bar_left, bar_right = st.columns([11, 1], vertical_alignment="center")
 
 with bar_left:
-    st.markdown(f"""
-    <div class="tws-command">
-      <div class="tws-brand">
-        <div class="tws-mark">T</div>
-        <div class="tws-brand-text">
-          <div class="tws-title">T.W.S GAMMA TERMINAL</div>
-          <div class="tws-caption">OPTIONS MARKET INTELLIGENCE</div>
-        </div>
-      </div>
-      <div class="tws-current">SELECTED&nbsp; <b>{st.session_state.tws_ticker}</b></div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="tws-command">'
+        '<div class="tws-brand">'
+        '<div class="tws-mark">T</div>'
+        '<div class="tws-brand-text">'
+        '<div class="tws-title">T.W.S GAMMA TERMINAL</div>'
+        '<div class="tws-caption">OPTIONS MARKET INTELLIGENCE</div>'
+        '</div>'
+        '</div>'
+        '<div class="tws-current">SELECTED&nbsp; <b>' + st.session_state.tws_ticker + '</b></div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
 with bar_right:
     with st.popover("🔎", use_container_width=True):
@@ -324,7 +270,7 @@ with bar_right:
         search_value = st.text_input(
             "Stock / Crypto / ETF",
             value=st.session_state.tws_ticker,
-            placeholder="AAPL, NVDA, SPY, BTC, ETH…",
+            placeholder="AAPL, NVDA, SPY, BTC, ETH...",
             key="tws_symbol_input",
             label_visibility="collapsed",
         )
@@ -345,13 +291,10 @@ with bar_right:
                 st.cache_data.clear()
                 st.rerun()
 
-# ============================================================
-# SIDEBAR CONTROLS
-# ============================================================
 with st.sidebar:
     st.markdown("## ⚡ TERMINAL CONTROLS")
     n_exp = st.slider("Expirations to load", 1, 12, 6)
-    window = st.slider("Strike window around spot (±%)", 5, 40, 15)
+    window = st.slider("Strike window around spot (+/-%)", 5, 40, 15)
     debug_mode = st.checkbox("🐞 Debug mode (show errors)", value=False)
     st.markdown("---")
     if st.button("🚀 ANALYZE / REFRESH"):
@@ -361,20 +304,15 @@ with st.sidebar:
 
 ticker = st.session_state.tws_ticker
 
-# ============================================================
-# HERO
-# ============================================================
-st.markdown("""
-<div class="hero">
-  <div class="live-badge">● LIVE OPTIONS DATA</div>
-  <div class="hero-title">T.W.S GAMMA TERMINAL</div>
-  <div class="hero-sub">OPTIONS MARKET INTELLIGENCE · Call Wall · Put Wall · Gamma Flip · Max Pain · IV · GEX</div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    '<div class="hero">'
+    '<div class="live-badge">● LIVE OPTIONS DATA</div>'
+    '<div class="hero-title">T.W.S GAMMA TERMINAL</div>'
+    '<div class="hero-sub">OPTIONS MARKET INTELLIGENCE · Call Wall · Put Wall · Gamma Flip · Max Pain · IV · GEX</div>'
+    '</div>',
+    unsafe_allow_html=True,
+)
 
-# ============================================================
-# MATH
-# ============================================================
 def bs_gamma(S, K, T, sigma, r=0.0):
     S = np.asarray(S, dtype=float)
     with np.errstate(all="ignore"):
@@ -382,11 +320,9 @@ def bs_gamma(S, K, T, sigma, r=0.0):
         g = np.exp(-0.5 * d1 ** 2) / np.sqrt(2 * np.pi) / (S * sigma * np.sqrt(T))
     return np.nan_to_num(g, nan=0.0, posinf=0.0, neginf=0.0)
 
-
 def total_gex_at(S, K, T, iv, oi, sign):
     g = bs_gamma(S, K, T, iv)
     return float(np.sum(g * oi * 100 * S * S * 0.01 * sign))
-
 
 def max_pain(chain):
     calls = chain[chain["side"] == "CALL"]
@@ -399,17 +335,12 @@ def max_pain(chain):
     pain = [np.sum(np.maximum(p - ck, 0) * co) + np.sum(np.maximum(pk - p, 0) * po) for p in strikes]
     return float(strikes[int(np.argmin(pain))])
 
-
-# ============================================================
-# DATA LOADERS
-# ============================================================
 def _clean(df):
     df["openInterest"] = pd.to_numeric(df["openInterest"], errors="coerce").fillna(0.0)
     df["volume"] = pd.to_numeric(df["volume"], errors="coerce").fillna(0.0)
     df["impliedVolatility"] = pd.to_numeric(df["impliedVolatility"], errors="coerce").fillna(0.0)
     df["strike"] = pd.to_numeric(df["strike"], errors="coerce")
     return df.dropna(subset=["strike"])
-
 
 def load_yahoo(symbol, n_exp):
     stock = yf.Ticker(symbol)
@@ -443,12 +374,11 @@ def load_yahoo(symbol, n_exp):
         raise ValueError("Yahoo: chain empty")
     return spot, _clean(pd.concat(rows, ignore_index=True))
 
-
 def load_cboe(symbol, n_exp):
     headers = {"User-Agent": "Mozilla/5.0"}
     data = None
     for sym in (symbol, "_" + symbol):
-        url = f"https://cdn.cboe.com/api/global/delayed_quotes/options/{sym}.json"
+        url = "https://cdn.cboe.com/api/global/delayed_quotes/options/" + sym + ".json"
         try:
             r = requests.get(url, headers=headers, timeout=20)
             if r.status_code == 200:
@@ -487,7 +417,6 @@ def load_cboe(symbol, n_exp):
     df = df[df["expiration"].isin(keep)]
     return spot, _clean(df.reset_index(drop=True))
 
-
 @st.cache_data(ttl=180, show_spinner=False)
 def load_options(symbol, n_exp):
     errors = []
@@ -496,35 +425,67 @@ def load_options(symbol, n_exp):
             spot, df = load_yahoo(symbol, n_exp)
             return spot, df, "Yahoo Finance"
         except Exception as e:
-            errors.append(f"Yahoo#{attempt+1}: {e}")
+            errors.append("Yahoo#" + str(attempt + 1) + ": " + str(e))
             time.sleep(0.6)
     try:
         spot, df = load_cboe(symbol, n_exp)
         return spot, df, "Cboe (delayed)"
     except Exception as e:
-        errors.append(f"Cboe: {e}")
+        errors.append("Cboe: " + str(e))
     raise ValueError(" | ".join(dict.fromkeys(errors)))
 
-
-# ============================================================
-# FETCH + ANALYSIS (fully wrapped)
-# ============================================================
-with st.status("📡 Fetching option chain…", expanded=True) as status:
-    st.write(f"Trying **Yahoo Finance** for `{ticker}` ({n_exp} expirations)…")
+with st.status("📡 Fetching option chain...", expanded=True) as status:
+    st.write("Trying **Yahoo Finance** for `" + ticker + "` (" + str(n_exp) + " expirations)...")
     try:
         spot, opt, source = load_options(ticker, n_exp)
-        status.update(label=f"✅ Data loaded from {source}", state="complete", expanded=False)
+        status.update(label="✅ Data loaded from " + source, state="complete", expanded=False)
     except Exception as fetch_err:
         status.update(label="❌ Data fetch failed", state="error", expanded=True)
-        st.error(f"**Data fetch error:** {fetch_err}")
+        st.error("**Data fetch error:** " + str(fetch_err))
         if debug_mode:
             import traceback
             st.code(traceback.format_exc())
-        st.info("💡 Try SPY / QQQ / AAPL. Yahoo kabhi kabhi rate-limit karta hai — 30 sec baad REFRESH dabao.")
+        st.info("💡 Try SPY / QQQ / AAPL. Yahoo kabhi kabhi rate-limit karta hai - 30 sec baad REFRESH dabao.")
         st.stop()
 
-st.caption(f"Fetched {len(opt):,} option rows · Spot ${spot:,.2f} · Source: {source}")
+st.caption("Fetched " + str(len(opt)) + " option rows · Spot $" + str(round(spot, 2)) + " · Source: " + source)
 
 try:
-    # ---- time to expiry (pandas-safe) ----
-    exp_ts = pd.to_datetime(opt["expirati
+    exp_ts = pd.to_datetime(opt["expiration"]) + pd.Timedelta(hours=20)
+    now_naive = pd.Timestamp.now()
+    days = (exp_ts - now_naive).dt.total_seconds() / 86400
+    opt["T"] = np.maximum(days.values, 0.5) / 365.0
+    opt["sign"] = np.where(opt["side"] == "CALL", 1.0, -1.0)
+
+    valid = (opt["impliedVolatility"] > 0.01) & (opt["impliedVolatility"] < 5) & (opt["openInterest"] > 0)
+    g_opt = opt[valid].copy()
+
+    if g_opt.empty:
+        st.warning("⚠️ No rows with valid IV + OI. Chain empty ya sab zero OI. Refresh karo.")
+        st.stop()
+
+    K  = g_opt["strike"].values.astype(float)
+    T  = g_opt["T"].values
+    IV = g_opt["impliedVolatility"].values
+    OI = g_opt["openInterest"].values
+    SG = g_opt["sign"].values
+
+    g_opt["GEX"] = bs_gamma(spot, K, T, IV) * OI * 100 * spot * spot * 0.01 * SG
+    net_gex = float(g_opt["GEX"].sum())
+
+    calls = opt[opt["side"] == "CALL"]
+    puts  = opt[opt["side"] == "PUT"]
+    c_oi = calls.groupby("strike")["openInterest"].sum()
+    p_oi = puts.groupby("strike")["openInterest"].sum()
+    c_above = c_oi[c_oi.index >= spot]
+    p_below = p_oi[p_oi.index <= spot]
+    call_wall = float((c_above if not c_above.empty else c_oi).idxmax())
+    put_wall  = float((p_below if not p_below.empty else p_oi).idxmax())
+
+    grid = np.linspace(spot * 0.8, spot * 1.2, 161)
+    profile = np.array([total_gex_at(s, K, T, IV, OI, SG) for s in grid])
+    gamma_flip = np.nan
+    cross = np.where(np.sign(profile[:-1]) * np.sign(profile[1:]) < 0)[0]
+    if len(cross):
+        best = min(cross, key=lambda i: abs(grid[i] - spot))
+        x0, x1, y0, y1 = grid[best], grid[best + 1], profile[best], 
