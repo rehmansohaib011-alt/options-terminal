@@ -4,9 +4,12 @@ import pandas as pd
 import numpy as np
 import altair as alt
 from datetime import datetime
+import re
+import time
+import requests
 
 # ============================================================
-# PAGE CONFIG + CSS
+# PAGE CONFIG
 # ============================================================
 st.set_page_config(
     page_title="T.W.S GAMMA TERMINAL",
@@ -15,11 +18,13 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# ============================================================
+# CSS — smooth, responsive, GPU-friendly
+# ============================================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-/* ---------- BASE: prevent any overflow, keep GPU-friendly ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 html, body, .stApp {
     font-family: 'Inter', sans-serif;
@@ -33,77 +38,54 @@ html, body, .stApp {
         linear-gradient(135deg, #050711 0%, #090d1b 50%, #050711 100%);
     color: #f3f6ff;
     -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
 }
 img, svg, video, canvas { max-width: 100%; height: auto; }
 
-/* ---------- T.W.S TOP COMMAND BAR ---------- */
+/* ---------- Command bar ---------- */
 .tws-command{
-    position:relative;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:12px 14px;
-    margin-bottom:14px;
-    border-radius:16px;
+    position:relative; display:flex; align-items:center; justify-content:space-between;
+    gap:12px; padding:12px 14px; margin-bottom:14px; border-radius:16px;
     background:linear-gradient(135deg,rgba(13,20,38,.92),rgba(7,11,22,.94));
-    border:1px solid #26385d;
-    box-shadow:0 14px 38px rgba(0,0,0,.22);
-    overflow:hidden;
-    min-width:0;
+    border:1px solid #26385d; box-shadow:0 14px 38px rgba(0,0,0,.22);
+    overflow:hidden; min-width:0;
 }
-.tws-brand{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    min-width:0;
-    flex:1 1 auto;
-}
+.tws-brand{ display:flex; align-items:center; gap:10px; min-width:0; flex:1 1 auto; }
 .tws-mark{
-    flex:0 0 auto;
-    width:34px;height:34px;border-radius:11px;
-    display:grid;place-items:center;
-    font-weight:900;color:#fff;font-size:14px;
+    flex:0 0 auto; width:34px; height:34px; border-radius:11px;
+    display:grid; place-items:center; font-weight:900; color:#fff; font-size:14px;
     background:linear-gradient(145deg,#6d5cff,#2e7bff);
     box-shadow:0 0 22px rgba(75,100,255,.28);
 }
 .tws-brand-text{ min-width:0; overflow:hidden; }
 .tws-title{
-    font-size:14px;font-weight:900;letter-spacing:.6px;line-height:1.15;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    font-size:14px; font-weight:900; letter-spacing:.6px; line-height:1.15;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .tws-caption{
-    font-size:9px;color:#71819e;margin-top:3px;letter-spacing:1px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    font-size:9px; color:#71819e; margin-top:3px; letter-spacing:1px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .tws-current{
-    color:#9aa8c0;font-size:11px;
-    flex:0 0 auto;
-    max-width:45%;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    color:#9aa8c0; font-size:11px; flex:0 0 auto; max-width:45%;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .tws-current b{ color:#fff; }
 
-/* ---------- SIDEBAR ---------- */
 section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #070b17, #0b1020);
     border-right: 1px solid #202d50;
 }
 
-/* ---------- LAYOUT ---------- */
 .block-container {
     max-width: 1500px;
     padding: 20px 22px 46px;
     overflow-x: clip;
 }
 
-/* ---------- HERO ---------- */
+/* ---------- Hero ---------- */
 .hero {
-    position: relative;
-    overflow: hidden;
-    padding: 24px 26px;
-    border-radius: 22px;
+    position: relative; overflow: hidden;
+    padding: 24px 26px; border-radius: 22px;
     background: linear-gradient(135deg, rgba(22,34,76,.95), rgba(10,14,30,.94));
     border: 1px solid #2c3d70;
     box-shadow: 0 0 35px rgba(66,103,255,.15);
@@ -113,13 +95,9 @@ section[data-testid="stSidebar"] {
     transition: transform .5s cubic-bezier(.16,1,.3,1), box-shadow .5s ease, border-color .5s ease;
 }
 .hero::after{
-    content:"";
-    position:absolute;
-    inset:0;
+    content:""; position:absolute; inset:0;
     background:radial-gradient(circle at 78% 50%,rgba(110,120,255,.14),transparent 34%);
-    opacity:.5;
-    pointer-events:none;
-    will-change:opacity;
+    opacity:.5; pointer-events:none;
     animation: heroPulse 6s ease-in-out infinite alternate;
 }
 @keyframes heroPulse { from{opacity:.35} to{opacity:.95} }
@@ -130,54 +108,37 @@ section[data-testid="stSidebar"] {
 }
 .hero-title {
     font-size: clamp(20px, 5vw, 34px);
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    line-height: 1.15;
+    font-weight: 800; letter-spacing: -0.5px; line-height: 1.15;
     word-break: break-word;
 }
 .hero-sub {
-    color: #8f9dbc;
-    margin-top: 8px;
+    color: #8f9dbc; margin-top: 8px;
     font-size: clamp(11px, 2.4vw, 14px);
-    line-height: 1.5;
-    word-break: break-word;
+    line-height: 1.5; word-break: break-word;
 }
 .live-badge {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: 999px;
-    color: #51f2b1;
-    background: rgba(25,92,69,.22);
-    border: 1px solid #24785d;
-    font-size: 11px; font-weight: 800; letter-spacing: .8px;
-    margin-bottom: 10px;
-    box-shadow: 0 0 0 rgba(81,242,177,0);
+    display: inline-block; padding: 5px 12px; border-radius: 999px;
+    color: #51f2b1; background: rgba(25,92,69,.22); border: 1px solid #24785d;
+    font-size: 11px; font-weight: 800; letter-spacing: .8px; margin-bottom: 10px;
     animation: liveGlow 2.4s ease-in-out infinite;
 }
 @keyframes liveGlow { 50% { box-shadow: 0 0 22px rgba(81,242,177,.18); } }
 
-/* ---------- METRIC CARDS ---------- */
+/* ---------- Metric / Level cards ---------- */
 .metric-card, .level-card {
-    position: relative;
-    overflow: hidden;
-    min-width: 0;
-    padding: 16px;
-    border-radius: 16px;
+    position: relative; overflow: hidden; min-width: 0;
+    padding: 16px; border-radius: 16px;
     background: linear-gradient(145deg, rgba(23,34,65,.92), rgba(9,14,28,.95));
     border: 1px solid #26365f;
     box-shadow: 0 10px 30px rgba(0,0,0,.25);
-    will-change: transform;
-    transform: translateZ(0);
+    will-change: transform; transform: translateZ(0);
     transition: transform .4s cubic-bezier(.16,1,.3,1), border-color .4s ease, box-shadow .4s ease;
 }
 .metric-card { min-height: 118px; }
 .metric-card::before, .level-card::before{
-    content:"";
-    position:absolute; inset:0;
+    content:""; position:absolute; inset:0;
     background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,.07) 50%,transparent 75%);
-    transform: translate3d(-130%,0,0);
-    transition: transform .8s ease;
-    pointer-events:none;
+    transform: translate3d(-130%,0,0); transition: transform .8s ease; pointer-events:none;
 }
 .metric-card:hover::before, .level-card:hover::before{ transform: translate3d(130%,0,0); }
 .metric-card:hover, .level-card:hover{
@@ -202,8 +163,6 @@ section[data-testid="stSidebar"] {
     font-weight:800; margin:24px 0 12px; color:#e5eaff;
     word-break:break-word;
 }
-
-/* ---------- LEVEL CARDS ---------- */
 .level-card { padding: 16px; min-height: 110px; }
 .level-name{
     font-size: 10.5px; color:#7e8cac; text-transform:uppercase;
@@ -237,16 +196,12 @@ section[data-testid="stSidebar"] {
 .pos { color: #3ddc97; }
 .neg { color: #ff5d73; }
 
-/* ---------- BUTTONS ---------- */
+/* ---------- Buttons ---------- */
 .stButton button{
-    width: 100%;
-    height: 44px;
-    border: none;
-    border-radius: 11px;
+    width: 100%; height: 44px; border: none; border-radius: 11px;
     background: linear-gradient(90deg, #4168ff, #7255ff);
     color: white; font-weight: 800;
-    will-change: transform;
-    transform: translateZ(0);
+    will-change: transform; transform: translateZ(0);
     transition: transform .28s cubic-bezier(.16,1,.3,1), box-shadow .3s ease, filter .3s ease;
 }
 .stButton button:hover{
@@ -256,27 +211,21 @@ section[data-testid="stSidebar"] {
 }
 .stButton button:active{ transform: translate3d(0,0,0) scale(.985); }
 
-/* ---------- DATAFRAME ---------- */
+/* ---------- Dataframe ---------- */
 [data-testid="stDataFrame"]{
-    border:1px solid #243354;
-    border-radius:15px;
-    overflow:hidden;
-    box-shadow:0 15px 40px rgba(0,0,0,.2);
-    max-width:100%;
+    border:1px solid #243354; border-radius:15px; overflow:hidden;
+    box-shadow:0 15px 40px rgba(0,0,0,.2); max-width:100%;
 }
 
-/* ---------- POPOVER (search icon) ---------- */
+/* ---------- Popover (search icon) ---------- */
 div[data-testid="stPopover"] > button{
-    height: 42px !important;
-    min-width: 42px !important;
-    width: 42px !important;
-    padding: 0 !important;
+    height: 42px !important; min-width: 42px !important;
+    width: 42px !important; padding: 0 !important;
     border-radius: 12px !important;
     background: linear-gradient(135deg, rgba(23,34,65,.95), rgba(9,14,28,.95)) !important;
     border: 1px solid #2c3d70 !important;
     color: #c9d4ee !important;
-    font-size: 16px !important;
-    font-weight: 700;
+    font-size: 16px !important; font-weight: 700;
     transition: transform .25s ease, box-shadow .3s ease, border-color .3s ease;
 }
 div[data-testid="stPopover"] > button:hover{
@@ -292,19 +241,17 @@ div[data-testid="stPopover"] > button:hover{
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
 
-/* ---------- RESPONSIVE ---------- */
+/* ---------- Responsive ---------- */
 @media (min-width: 1100px){
     .block-container { padding: 26px 34px 55px; }
     .hero { min-height: 155px; display:flex; flex-direction:column; justify-content:center; }
     .metric-card { min-height: 128px; }
     .level-card { min-height: 118px; }
 }
-
 @media (max-width: 900px){
     .block-container { padding: 16px 16px 40px; }
     .hero { padding: 20px 20px; }
 }
-
 @media (max-width: 700px){
     .block-container { padding: 12px 12px 34px; }
     .hero { padding: 18px 16px; border-radius: 18px; margin-bottom: 14px; }
@@ -316,18 +263,15 @@ footer { visibility: hidden; }
     .tws-current { font-size: 10px; }
     .tws-mark { width: 30px; height: 30px; border-radius: 9px; font-size: 12px; }
 }
-
 @media (max-width: 520px){
     .tws-current { display: none; }
     .tws-command { padding: 10px 12px; }
 }
-
 @media (max-width: 430px){
     .metric-card { padding: 11px; min-height: 88px; }
     .level-card { padding: 11px; min-height: 88px; }
     .hero { padding: 16px 13px; }
 }
-
 @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{
         animation-duration: .01ms !important;
@@ -343,7 +287,7 @@ TICKERS = ["SPY", "QQQ", "IWM", "NVDA", "AMD", "AAPL", "TSLA", "MSFT", "META", "
            "GOOGL", "NFLX", "AVGO", "INTC", "MU", "PLTR", "SMCI", "SMH", "SOXL", "COIN"]
 
 # ============================================================
-# SIDEBAR
+# SESSION STATE
 # ============================================================
 if "tws_ticker" not in st.session_state:
     st.session_state.tws_ticker = "SPY"
@@ -355,7 +299,9 @@ def normalize_symbol(value: str) -> str:
               "XRP":"XRP-USD","BNB":"BNB-USD"}
     return crypto.get(value, value)
 
-# Compact command bar
+# ============================================================
+# COMMAND BAR + SEARCH POPOVER
+# ============================================================
 bar_left, bar_right = st.columns([11, 1], vertical_alignment="center")
 
 with bar_left:
@@ -399,10 +345,14 @@ with bar_right:
                 st.cache_data.clear()
                 st.rerun()
 
+# ============================================================
+# SIDEBAR CONTROLS
+# ============================================================
 with st.sidebar:
     st.markdown("## ⚡ TERMINAL CONTROLS")
     n_exp = st.slider("Expirations to load", 1, 12, 6)
     window = st.slider("Strike window around spot (±%)", 5, 40, 15)
+    debug_mode = st.checkbox("🐞 Debug mode (show errors)", value=False)
     st.markdown("---")
     if st.button("🚀 ANALYZE / REFRESH"):
         st.cache_data.clear()
@@ -423,7 +373,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# MATH (vectorized)
+# MATH
 # ============================================================
 def bs_gamma(S, K, T, sigma, r=0.0):
     S = np.asarray(S, dtype=float)
@@ -434,7 +384,6 @@ def bs_gamma(S, K, T, sigma, r=0.0):
 
 
 def total_gex_at(S, K, T, iv, oi, sign):
-    """Net dollar gamma per 1% move at hypothetical spot S."""
     g = bs_gamma(S, K, T, iv)
     return float(np.sum(g * oi * 100 * S * S * 0.01 * sign))
 
@@ -452,13 +401,8 @@ def max_pain(chain):
 
 
 # ============================================================
-# DATA
+# DATA LOADERS
 # ============================================================
-import re
-import time
-import requests
-
-
 def _clean(df):
     df["openInterest"] = pd.to_numeric(df["openInterest"], errors="coerce").fillna(0.0)
     df["volume"] = pd.to_numeric(df["volume"], errors="coerce").fillna(0.0)
@@ -482,7 +426,7 @@ def load_yahoo(symbol, n_exp):
 
     expirations = list(stock.options)
     if not expirations:
-        raise ValueError("Yahoo: no options")
+        raise ValueError("Yahoo: no options listed")
 
     rows = []
     for exp in expirations[:n_exp]:
@@ -544,7 +488,7 @@ def load_cboe(symbol, n_exp):
     return spot, _clean(df.reset_index(drop=True))
 
 
-@st.cache_data(ttl=120, show_spinner="Fetching live option chain...")
+@st.cache_data(ttl=180, show_spinner=False)
 def load_options(symbol, n_exp):
     errors = []
     for attempt in range(2):
@@ -552,41 +496,35 @@ def load_options(symbol, n_exp):
             spot, df = load_yahoo(symbol, n_exp)
             return spot, df, "Yahoo Finance"
         except Exception as e:
-            errors.append(str(e))
-            time.sleep(1)
+            errors.append(f"Yahoo#{attempt+1}: {e}")
+            time.sleep(0.6)
     try:
         spot, df = load_cboe(symbol, n_exp)
         return spot, df, "Cboe (delayed)"
     except Exception as e:
-        errors.append(str(e))
-    raise ValueError(f"No options data for {symbol}. Tried: " + " | ".join(dict.fromkeys(errors)))
+        errors.append(f"Cboe: {e}")
+    raise ValueError(" | ".join(dict.fromkeys(errors)))
 
 
 # ============================================================
-# ANALYSIS
+# FETCH + ANALYSIS (fully wrapped)
 # ============================================================
+with st.status("📡 Fetching option chain…", expanded=True) as status:
+    st.write(f"Trying **Yahoo Finance** for `{ticker}` ({n_exp} expirations)…")
+    try:
+        spot, opt, source = load_options(ticker, n_exp)
+        status.update(label=f"✅ Data loaded from {source}", state="complete", expanded=False)
+    except Exception as fetch_err:
+        status.update(label="❌ Data fetch failed", state="error", expanded=True)
+        st.error(f"**Data fetch error:** {fetch_err}")
+        if debug_mode:
+            import traceback
+            st.code(traceback.format_exc())
+        st.info("💡 Try SPY / QQQ / AAPL. Yahoo kabhi kabhi rate-limit karta hai — 30 sec baad REFRESH dabao.")
+        st.stop()
+
+st.caption(f"Fetched {len(opt):,} option rows · Spot ${spot:,.2f} · Source: {source}")
+
 try:
-    spot, opt, source = load_options(ticker, n_exp)
-except Exception as e:
-    st.error(f"❌ {e}")
-    st.stop()
-
-exp_ts = pd.to_datetime(opt["expiration"]) + pd.Timedelta(hours=20)
-days = (exp_ts - pd.Timestamp.utcnow().tz_localize(None)).dt.total_seconds() / 86400
-opt["T"] = np.maximum(days.values, 0.5) / 365.0
-opt["sign"] = np.where(opt["side"] == "CALL", 1.0, -1.0)
-
-valid = (opt["impliedVolatility"] > 0.01) & (opt["impliedVolatility"] < 5) & (opt["openInterest"] > 0)
-g_opt = opt[valid].copy()
-
-K = g_opt["strike"].values.astype(float)
-T = g_opt["T"].values
-IV = g_opt["impliedVolatility"].values
-OI = g_opt["openInterest"].values
-SG = g_opt["sign"].values
-
-g_opt["GEX"] = bs_gamma(spot, K, T, IV) * OI * 100 * spot * spot * 0.01 * SG
-net_gex = float(g_opt["GEX"].sum())
-
-calls = opt[opt["side"] == "CALL"]
-puts = opt[opt["side"] == "PUT"]
+    # ---- time to expiry (pandas-safe) ----
+    exp_ts = pd.to_datetime(opt["expirati
